@@ -81,7 +81,7 @@ const App = () => {
           {wheelData.length > 0 && (
             <Wheel
               mustStartSpinning={!!winner}
-              prizeNumber={wheelData.findIndex(data => data.option.includes(winner)) !== -1 ? wheelData.findIndex(data => data.option.includes(winner)) : 0}
+              prizeNumber={wheelData.findIndex(data => data.option.includes(winner)) !== -1 ? wheelData.findIndex(data => data.option.includes(winner)) : Math.floor(Math.random() * wheelData.length)}
               data={wheelData}
               backgroundColors={['#3e3e3e', '#df3428']}
               textColors={['#ffffff']}
@@ -101,7 +101,9 @@ const App = () => {
         <Box ml={10}>
           <Text fontSize="xl" mb={4}>Entries</Text>
           {Object.entries(addresses.reduce((acc, address) => {
-            acc[address] = (acc[address] || 0) + 1;
+            if (address) {
+              acc[address] = (acc[address] || 0) + 1;
+            }
             return acc;
           }, {})).sort((a, b) => b[1] - a[1]).map(([address, count], index) => (
             <Text key={index} fontSize="lg">
