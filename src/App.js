@@ -26,7 +26,8 @@ const App = () => {
             }, {});
             const wheelData = Object.entries(addressCounts).map(([address, count]) => ({
               option: `${address.slice(0, 2)}...${address.slice(-4)}`,
-              style: { backgroundColor: ['#EE4040', '#F0CF50', '#815CD1', '#3DA5E0', '#34A24F', '#F9AA1F', '#EC3F3F', '#FF9000'][Math.floor(Math.random() * 8)] }
+              style: { backgroundColor: ['#EE4040', '#F0CF50', '#815CD1', '#3DA5E0', '#34A24F', '#F9AA1F', '#EC3F3F', '#FF9000'][Math.floor(Math.random() * 8)] },
+              optionSize: count // Add optionSize to wheelData for proportional allocation
             }));
             setWheelData(wheelData);
           }
@@ -35,7 +36,7 @@ const App = () => {
   }, []);
 
   const pickWinner = () => {
-    const filteredAddresses = addresses.filter(address => address);
+    const filteredAddresses = addresses.filter(address => /^0x[a-fA-F0-9]{40}$/.test(address)); // Ensure only valid Ethereum addresses
     const addressCounts = filteredAddresses.reduce((acc, address) => {
       acc[address] = (acc[address] || 0) + 1;
       return acc;
@@ -52,14 +53,20 @@ const App = () => {
       setWinner(weightedAddresses[randomIndex]);
     }
 
-    // Update wheelData to remove first 2 and last 4 digits of each wallet address
+    // Update wheelData to remove first 2 and last 4 digits of each wallet address and allocate space based on count
     const updatedWheelData = Object.entries(addressCounts).map(([address, count]) => ({
       option: `${address.slice(0, 2)}...${address.slice(-4)}`,
       style: { backgroundColor: ['#EE4040', '#F0CF50', '#815CD1', '#3DA5E0', '#34A24F', '#F9AA1F', '#EC3F3F', '#FF9000'][Math.floor(Math.random() * 8)] },
-      count: count
+      optionSize: count // Add optionSize to wheelData for proportional allocation
     }));
-
     setWheelData(updatedWheelData);
+
+    if (winner) {
+      const winnerIndex = updatedWheelData.findIndex(data => data.option.includes(winner.slice(0, 2)) && data.option.includes(winner.slice(-4)));
+      if (winnerIndex === -1) {
+        setWinner(null); // Reset winner if not found in wheelData
+      }
+    }
   };
 
   return (
@@ -81,7 +88,7 @@ const App = () => {
           {wheelData.length > 0 && (
             <Wheel
               mustStartSpinning={!!winner}
-              prizeNumber={wheelData.findIndex(data => data.option.includes(winner)) !== -1 ? wheelData.findIndex(data => data.option.includes(winner)) : Math.floor(Math.random() * wheelData.length)}
+              prizeNumber={winner ? (wheelData.findIndex(data => data.option.includes(winner.slice(0, 2)) && data.option.includes(winner.slice(-4))) !== -1 ? wheelData.findIndex(data => data.option.includes(winner.slice(0, 2)) && data.option.includes(winner.slice(-4))) : Math.floor(Math.random() * wheelData.length)) : Math.floor(Math.random() * wheelData.length)}
               data={wheelData}
               backgroundColors={['#3e3e3e', '#df3428']}
               textColors={['#ffffff']}
@@ -100,10 +107,8 @@ const App = () => {
         </Box>
         <Box ml={10}>
           <Text fontSize="xl" mb={4}>Entries</Text>
-          {Object.entries(addresses.reduce((acc, address) => {
-            if (address) {
-              acc[address] = (acc[address] || 0) + 1;
-            }
+          {Object.entries(addresses.filter(address => address && /^0x[a-fA-F0-9]{40}$/.test(address)).reduce((acc, address) => {
+            acc[address] = (acc[address] || 0) + 1;
             return acc;
           }, {})).sort((a, b) => b[1] - a[1]).map(([address, count], index) => (
             <Text key={index} fontSize="lg">
