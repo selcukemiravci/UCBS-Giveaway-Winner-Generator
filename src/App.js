@@ -63,8 +63,8 @@ const App = () => {
 
     if (winner) {
       const winnerIndex = updatedWheelData.findIndex(data => data.option.includes(winner.slice(0, 2)) && data.option.includes(winner.slice(-4)));
-      if (winnerIndex === -1) {
-        setWinner(null); // Reset winner if not found in wheelData
+      if (winnerIndex === -1 || updatedWheelData.length === 0) {
+        setWinner(null); // Reset winner if not found in wheelData or if wheelData is empty
       }
     }
   };
